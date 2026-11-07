@@ -1,4 +1,7 @@
-// Replace ONLY with your Supabase project's public URL and publishable/anon key.
-// NEVER put the service_role key here.
-window.SUPABASE_URL = '';
-window.SUPABASE_ANON_KEY = '';
+
+ // English Learn with Shirmentuya
+ // Supabase public configuration
+
+ window.SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+
+ window.SUPABASE_ANON_KEY = 'YOUR-PUBLISHABLE-KEY';
