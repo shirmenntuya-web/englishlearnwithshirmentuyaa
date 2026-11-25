@@ -151,7 +151,83 @@ function translateAuthError(error) {
 }
 
 
+
 async function auth(method) {
+  if (!db) {
+    notice("❌ Сервертэй холбогдоогүй байна.");
+    return;
+  }
+
+  const email = $("email").value.trim().toLowerCase();
+  const password = $("password").value;
+
+  if (!email || !password) {
+    notice("Имэйл болон нууц үгээ оруулна уу.");
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    notice("Имэйл хаягаа зөв оруулна уу.");
+    return;
+  }
+
+  if (method === "signUp" && password.length < 8) {
+    notice("Нууц үг хамгийн багадаа 8 тэмдэгт байх ёстой.");
+    return;
+  }
+
+  try {
+    let result;
+
+    if (method === "signUp") {
+      result = await db.auth.signUp({
+        email,
+        password
+      });
+    } else if (method === "signInWithPassword") {
+      result = await db.auth.signInWithPassword({
+        email,
+        password
+      });
+    } else {
+      notice("Үл мэдэгдэх үйлдэл.");
+      return;
+    }
+
+    const { data, error } = result;
+
+    if (error) {
+      notice("❌ " + translateAuthError(error));
+      return;
+    }
+
+    if (method === "signUp" && !data.session) {
+      notice(
+        "✅ Бүртгүүлэх хүсэлт амжилттай. " +
+        "Имэйл баталгаажуулах шаардлагатай бол " +
+        "Gmail хаягаа шалгана уу."
+      );
+      return;
+    }
+
+    await refreshUser();
+
+    notice(
+      method === "signUp"
+        ? "✅ Амжилттай бүртгүүллээ!"
+        : "✅ Амжилттай нэвтэрлээ!"
+    );
+
+    if (user) {
+      await showMyProfile();
+    }
+
+  } catch (error) {
+    console.error("Auth error:", error);
+    notice("❌ " + translateAuthError(error));
+  }
+}
+ {
   if (!db) {
     notice("Серверийн холболт тохируулагдаагүй байна.");
     return;
