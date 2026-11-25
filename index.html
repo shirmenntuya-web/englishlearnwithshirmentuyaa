@@ -5,7 +5,70 @@ const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g
 let db=null,user=null,role=null,selectedGrade=6,current=null,overrides={};try{if(window.SUPABASE_URL&&window.SUPABASE_ANON_KEY&&window.supabase)db=window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY)}catch(e){console.warn(e)}
 const notice=s=>$('message').textContent=s;function screen(id){['home','lesson','account','myProfile','teacher'].forEach(x=>$(x).classList.toggle('hidden',x!==id));window.scrollTo(0,0)}function showHome(){screen('home');renderUnits(selectedGrade)}function showAccount(){if(user){showMyProfile();return}screen('account');$('sessionStatus').textContent='Одоогоор нэвтрээгүй'}
 function updateLoginUI(){let logged=!!user;$('loginStatus').textContent=logged?'✅ Нэвтэрсэн: '+user.email:'⚪ Нэвтрээгүй байна';$('accountNav').textContent=logged?'👤 Миний бүртгэл':'👤 Нэвтрэх / бүртгүүлэх';$('logoutNav').style.display=logged?'inline-block':'none'}
-function showMyProfile(){if(!user){showAccount();return}screen('myProfile');$('myProfileInfo').innerHTML='<p><b>Төлөв:</b> ✅ Амжилттай нэвтэрсэн</p><p><b>Имэйл:</b> '+esc(user.email)+'</p><p><b>Эрх:</b> '+(role==='teacher'?'Багш':'Сурагч')+'</p>'}
+
+const STUDENT_RANKS = [
+  { min: 0, title: "🌱 English Beginner" },
+  { min: 100, title: "📚 Word Explorer" },
+  { min: 250, title: "⭐ English Star" },
+  { min: 500, title: "🔥 Grammar Hero" },
+  { min: 800, title: "💎 English Master" },
+  { min: 1200, title: "🏆 English Champion" }
+];
+
+function getStudentRank(points) {
+  return [...STUDENT_RANKS]
+    .reverse()
+    .find(rank => points >= rank.min);
+}
+
+  function showMyProfile()
+async function showMyProfile() {
+  if (!user) {
+    showAccount();
+    return;
+  }
+
+  screen("myProfile");
+
+  const info = $("myProfileInfo");
+  info.textContent = "Суралцах мэдээллийг ачаалж байна...";
+
+  let points = 0;
+
+  if (db) {
+    const { data, error } = await db
+      .from("lesson_progress")
+      .select("score")
+      .eq("student_id", user.id);
+
+    if (error) {
+      console.error("Progress error:", error);
+      info.textContent =
+        "Сурагчийн оноог ачаалж чадсангүй.";
+      return;
+    }
+
+    points = (data || []).reduce(
+      (sum, item) => sum + Number(item.score || 0),
+      0
+    );
+  }
+
+  const rank = getStudentRank(points);
+
+  info.innerHTML = `
+    <p><b>Төлөв:</b> ✅ Нэвтэрсэн</p>
+    <p><b>Имэйл:</b> ${esc(user.email)}</p>
+    <p><b>Эрх:</b>
+      ${role === "teacher" ? "Багш" : "Сурагч"}
+    </p>
+    <hr>
+    <h3>🏅 Миний цол</h3>
+    <h2>${rank.title}</h2>
+    <p>⭐ Нийт оноо: ${points}</p>
+  `;
+}
+{if(!user){showAccount();return}screen('myProfile');$('myProfileInfo').innerHTML='<p><b>Төлөв:</b> ✅ Амжилттай нэвтэрсэн</p><p><b>Имэйл:</b> '+esc(user.email)+'</p><p><b>Эрх:</b> '+(role==='teacher'?'Багш':'Сурагч')+'</p>'}
 function renderGrades(){$('grades').innerHTML=Array.from({length:7},(_,i)=>i+6).map(g=>`<button class="grade ${selectedGrade===g?'active':''}" onclick="renderUnits(${g})"><strong>${g}-р анги</strong><span>${'Сурах бичгийн нэгжүүд'}</span></button>`).join('')}
 function renderUnits(g){selectedGrade=g;renderGrades();$('unitPanel').classList.remove('hidden');$('gradeTitle').textContent=g+'-р ангийн Unit-үүд';let u=CURRICULUM[g]||[];$('units').innerHTML=u.map((title,i)=>`<div class="unit"><div><b>Unit ${i+1}. ${esc(title)}</b><br><small>4 × 25 минутын жишиг хичээл</small><div class="lesson-picker">${[1,2,3,4].map(n=>`<button class="secondary" onclick="openLesson(${g},${i+1},${n})">Хичээл ${n}</button>`).join('')}</div></div></div>`).join('')}
 function key(g,u){return g+'-'+u}function getLesson(g,u){return overrides[key(g,u)]||LESSONS[key(g,u)]}let activeSpeech=null;
