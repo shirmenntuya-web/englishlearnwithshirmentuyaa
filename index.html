@@ -43,7 +43,7 @@ async function showMyProfile() {
     const { data, error } = await db
       .from("lesson_progress")
       .select("score")
-.eq("user_id", user.id)
+      .eq("user_id", user.id);
     if (error) {
       console.error("Progress error:", error);
       info.innerHTML = `<p><b>Төлөв:</b> ✅ Нэвтэрсэн</p><p><b>Имэйл:</b> ${esc(user.email)}</p><p><b>Эрх:</b> ${role === "teacher" ? "Багш" : "Сурагч"}</p><p>🏅 Цол болон оноог одоогоор ачаалах боломжгүй. lesson_progress хүснэгтийн багануудыг шалгах шаардлагатай.</p>`;
@@ -224,61 +224,6 @@ async function auth(method) {
 
   } catch (error) {
     console.error("Auth error:", error);
-    notice("❌ " + translateAuthError(error));
-  }
-}
- {
-  if (!db) {
-    notice("Серверийн холболт тохируулагдаагүй байна.");
-    return;
-  }
-
-  const email = $("email").value.trim();
-  const password = $("password").value;
-
-  if (!email || !password) {
-    notice("Имэйл хаяг болон нууц үгээ оруулна уу.");
-    return;
-  }
-
-  if (password.length < 8 && method === "signUp") {
-    notice("Нууц үг хамгийн багадаа 8 тэмдэгт байх ёстой.");
-    return;
-  }
-
-  try {
-    const { data, error } = await db.auth[method]({
-      email,
-      password
-    });
-
-    if (error) {
-      notice("❌ " + translateAuthError(error));
-      return;
-    }
-
-    user = data.user || data.session?.user || null;
-
-    if (method === "signUp") {
-      notice(
-        data.session
-          ? "✅ Амжилттай бүртгүүллээ!"
-          : "✅ Бүртгүүлэх хүсэлт амжилттай. Имэйл баталгаажуулах шаардлагатай байж болно."
-      );
-    } else {
-      notice("✅ Амжилттай нэвтэрлээ!");
-    }
-
-    await refreshUser();
-
-    if (user) {
-      showMyProfile();
-    } else {
-      showAccount();
-    }
-
-  } catch (error) {
-    console.error("Authentication error:", error);
     notice("❌ " + translateAuthError(error));
   }
 }
