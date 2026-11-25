@@ -43,8 +43,7 @@ async function showMyProfile() {
     const { data, error } = await db
       .from("lesson_progress")
       .select("score")
-      .eq("student_id", user.id);
-
+.eq("user_id", user.id)
     if (error) {
       console.error("Progress error:", error);
       info.innerHTML = `<p><b>Төлөв:</b> ✅ Нэвтэрсэн</p><p><b>Имэйл:</b> ${esc(user.email)}</p><p><b>Эрх:</b> ${role === "teacher" ? "Багш" : "Сурагч"}</p><p>🏅 Цол болон оноог одоогоор ачаалах боломжгүй. lesson_progress хүснэгтийн багануудыг шалгах шаардлагатай.</p>`;
